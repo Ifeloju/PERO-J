@@ -1,0 +1,25 @@
+name: Secret Scanning
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gitleaks:
+    name: Gitleaks – detect hardcoded secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for complete scan)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE is required for organisation-level scans;
+          # leave unset for public repositories.
+        with:
+          config-path: .gitleaks.toml

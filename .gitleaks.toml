@@ -1,0 +1,69 @@
+# Gitleaks configuration for PERO-J
+# https://github.com/gitleaks/gitleaks#configuration
+
+title = "PERO-J Gitleaks Configuration"
+
+[extend]
+# Extend the default ruleset shipped with Gitleaks
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Stellar-specific rules
+# ---------------------------------------------------------------------------
+[[rules]]
+id          = "stellar-secret-key"
+description = "Stellar secret key (S… 56-character seed)"
+regex       = '''(?i)S[A-Z2-7]{55}'''
+# Stellar secret keys start with 'S' and are 56 base-32 characters total.
+tags        = ["stellar", "key", "secret"]
+severity    = "critical"
+
+[[rules]]
+id          = "stellar-horizon-jwt"
+description = "Stellar Horizon / SEP-10 JWT"
+regex       = '''eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}'''
+tags        = ["stellar", "jwt", "token"]
+severity    = "high"
+
+# ---------------------------------------------------------------------------
+# Generic high-value secrets
+# ---------------------------------------------------------------------------
+[[rules]]
+id          = "database-url-with-password"
+description = "Database URL containing a password"
+regex       = '''(?i)(postgres|postgresql|mysql|mariadb):\/\/[^:]+:[^@\/]{3,}@'''
+tags        = ["database", "credential"]
+severity    = "critical"
+
+[[rules]]
+id          = "generic-api-key"
+description = "Generic API key assignment"
+regex       = '''(?i)(api[_-]?key|apikey|access[_-]?token|secret[_-]?key)\s*[:=]\s*['"]?[A-Za-z0-9_\-]{20,}['"]?'''
+tags        = ["api", "key", "secret"]
+severity    = "high"
+
+# ---------------------------------------------------------------------------
+# Allowlist – paths that are safe to contain key-like strings
+# ---------------------------------------------------------------------------
+[allowlist]
+description = "Globally allowed paths and patterns"
+paths = [
+  # Test fixtures and snapshots may contain fake keys
+  '''^tests/''',
+  '''^contracts/explorer/test_snapshots/''',
+  # Lock files are auto-generated and contain hashes, not secrets
+  '''package-lock\.json$''',
+  '''Cargo\.lock$''',
+  # Documentation examples use placeholder keys
+  '''^docs/''',
+  '''README\.md$''',
+  '''^\.env\.example$''',
+]
+
+regexes = [
+  # Placeholder / example values used in docs
+  '''GABC\w+''',
+  '''SBADKEY\w*''',
+  '''YOUR_SECRET_KEY_HERE''',
+  '''<YOUR_''',
+]

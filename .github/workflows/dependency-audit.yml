@@ -1,0 +1,73 @@
+name: Dependency Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: '0 6 * * *'
+
+jobs:
+  cargo-audit:
+    name: Rust – cargo audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install --locked cargo-audit
+
+      - name: Run cargo audit
+        run: cargo audit
+        # Fails the build for moderate-to-critical CVEs (cargo audit default)
+
+  npm-audit-indexer:
+    name: Node.js – npm audit (indexer)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: indexer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: indexer/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+
+  npm-audit-frontend:
+    name: Node.js – npm audit (frontend)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
